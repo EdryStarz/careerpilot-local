@@ -3,7 +3,8 @@ import re
 import httpx
 
 async def local_json(profile, instruction, payload, schema):
-    async with httpx.AsyncClient(timeout=float(profile.data.get('model_timeout', 180))) as client:
+    # A system proxy must not turn loopback CV inference into a remote request.
+    async with httpx.AsyncClient(timeout=float(profile.data.get('model_timeout', 180)),trust_env=False) as client:
         response = await client.post(profile.model_endpoint(), json={
             'model':profile.env.get('LLM_MODEL') or profile.env.get('OLLAMA_MODEL', 'qwen3:4b'),
             'stream':False,'think':False,'format':schema,
