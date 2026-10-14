@@ -8,4 +8,5 @@ playwright==1.61.0
 pydantic==2.13.4
 python-dotenv==1.2.2
 PyYAML==6.0.3
+tzdata>=2025.2,<2027
 pillow>=10.0.0

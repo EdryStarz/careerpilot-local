@@ -1,0 +1,22 @@
+name: Bug report
+description: Report a reproducible issue without personal data
+body:
+  - type: markdown
+    attributes:
+      value: Never paste tokens, CVs, cookies or employer conversations. Use fictional examples.
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected and actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps and sanitized logs
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: OS, Python and project version

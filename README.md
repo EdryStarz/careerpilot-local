@@ -1,187 +1,95 @@
-# HH AI Agent
+<div align="center">
 
-Агент автоматически ищет вакансии на HH.ru, оценивает их через LLM, генерирует сопроводительные письма и присылает подходящие в Telegram.
+![CareerPilot Local](docs/hero.svg)
 
-## Быстрый старт
+# CareerPilot Local
 
-Запусти мастер настройки — он проведёт тебя через все шаги:
+**Your CV. Your local model. Your job search.**
+
+HH.ru job search with local AI, Telegram review and optional applications.
+
+![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB)
+![MIT](https://img.shields.io/badge/License-MIT-34d399)
+![Preview](https://img.shields.io/badge/Release-public_preview-fbbf24)
+
+[Quick start](#quick-start) · [Русский](#по-русски) · [Full guide](README.upstream.md) · [Contribute](CONTRIBUTING.md)
+
+</div>
+
+## What it does
+
+- Searches HH.ru using **your own** profile and target roles.
+- Uses Ollama locally to evaluate jobs and draft personalized letters.
+- Sends candidates to your private Telegram bot for review.
+- Supports dry-run, approval and explicitly enabled automatic applications.
+- Maintains a local application ledger and limits.
+
+**Public preview, not universal unattended job applications.** Login, CAPTCHA, questionnaires, legal consent and changing websites may require intervention. A timeout is not proof of failure: never blindly retry an uncertain application.
+
+## Quick start
+
+Install Python 3.11+, [Ollama](https://ollama.com/), and create a Telegram bot through [BotFather](https://t.me/BotFather). Select a local model that fits your hardware.
 
 ```bash
+git clone https://github.com/EdryStarz/careerpilot-local.git
+cd careerpilot-local
+python -m venv .venv
+```
+
+```powershell
+# Windows activation
+.\.venv\Scripts\Activate.ps1
+```
+
+```bash
+# macOS / Linux activation
+source .venv/bin/activate
+```
+
+```bash
+python -m pip install -r requirements.txt
 python setup_wizard.py
+python main.py --once
 ```
 
-Wizard спросит:
-1. Токен Telegram-бота и твой User ID
-2. Какой AI-провайдер использовать (Ollama локально, Mistral API или любой OpenAI-compatible)
-3. Данные твоего профиля для анализа вакансий
-4. Режим работы (`dry_run`, `approval` или `auto`)
+The wizard creates private `.env` and `profile.yaml` files. Start with **Ollama + dry_run**. See [the full configuration guide](README.upstream.md) for model setup, browser login, resume selection, Telegram and application modes.
 
-После этого создаст `.env` и `profile.yaml`, проверит конфигурацию и покажет что делать дальше.
+## Safety and privacy
 
-**Изменить настройки позже:**
+| Mode | Real applications | Purpose |
+|---|---|---|
+| `dry_run` | No | Test matching and letters |
+| `approval` | With explicit real-apply settings and your approval | Review individually |
+| Optional auto-apply | Yes, when enabled | Tested workflows with limits |
+
+Never invent credentials, work authorization, languages, employers, achievements or consent. Review the generated content before enabling applications. Platform rules still apply; there is no CAPTCHA bypass.
+
+Your profile is local, but submitted applications go to employers, and bot messages go to Telegram. Optional cloud-model providers receive prompts; choose Ollama for local inference. Local AI does not make the whole workflow offline or eliminate hardware costs.
+
+## Included / not included
+
+This distribution includes the upstream HH agent, setup wizard, examples and tests. It does **not** contain the maintainer's CVs, tokens, browser sessions, logs or application history.
+
+Generic LinkedIn, Upwork, personal-account Telegram outreach and multi-site ATS adapters are **not included**. The personalized multi-site worker is not yet a reusable public product. Interviews, offers and popularity are not guaranteed.
+
+## По-русски
+
+Локальный помощник для поиска работы на HH.ru. Добавьте свой профиль, подключите Ollama и Telegram, проверьте подбор и письма в `dry_run`. Это предварительная публичная версия, а не универсальный автоотклик на все сайты.
+
+Пошаговая настройка — в [полной инструкции](README.upstream.md). Не публикуйте `.env`, резюме, cookies, базы или переписки. Не повторяйте отправку, если предыдущий результат неизвестен.
+
+## Development
 
 ```bash
-python setup_wizard.py --edit
+python -m pip install -r requirements-dev.txt
+python -m pytest -q
+python scripts/check_public_files.py
 ```
 
----
+[Contributing](CONTRIBUTING.md) · [Security](SECURITY.md)
 
-## Требования
+## Credits
 
-- Python 3.11+
-- Telegram Bot (создаётся через [@BotFather](https://t.me/BotFather))
-- Один из LLM-провайдеров (подробнее ниже)
-- [CloakBrowser](https://cloakbrowser.com/) (устанавливается автоматически через wizard)
+Based on [fikstt2/hh-ai-agent](https://github.com/fikstt2/hh-ai-agent). Original MIT copyright preserved in [LICENSE](LICENSE). Public-preview packaging and documentation by [EdryStarz](https://github.com/EdryStarz). No affiliation with HeadHunter, Telegram or Ollama.
 
----
-
-## Режимы работы
-
-| Режим | Описание |
-|---|---|
-| `dry_run` | Ищет и анализирует вакансии, присылает превью в Telegram — **без реальных откликов** |
-| `approval` | Присылает вакансию в Telegram с кнопкой «Откликнуться» для ручного подтверждения |
-| `auto` (автоподача) | Автоматически откликается на вакансии с высоким совпадением (по умолчанию ≥ 85%) безопасными пачками по расписанию; остальные отправляет на ручной аппрув |
-
-Начинай с `dry_run`. Переходи на `approval` или `auto` после того как убедишься что всё работает.
-
-Карточка вакансии показывает краткое объяснение совпадения, рейтинг компании с HH и сворачиваемое сопроводительное письмо. Если rich messages недоступны, бот отправляет обычную HTML-карточку.
-
-### Опциональная автоподача
-
-Автоподача выключена по умолчанию. Для её включения нужны все три настройки:
-
-```dotenv
-APP_MODE=approval
-ENABLE_REAL_APPLY=true
-AUTO_APPLY_ENABLED=true
-```
-
-Порог совпадения, размер пачки, интервалы и рабочее окно задаются через `AUTO_APPLY_*` в `.env`. Агент соблюдает `MAX_APPLICATIONS_PER_DAY`, продолжает поиск до достижения фактического размера пачки и отправляет итог каждого запуска в Telegram. Вакансии ниже порога остаются на ручной проверке. Если состояние отправки нельзя подтвердить, circuit breaker приостанавливает следующие отклики.
-
----
-
-## LLM-провайдеры
-
-### Ollama (рекомендуется — локально, бесплатно)
-
-1. Установи [Ollama](https://ollama.com/download)
-2. Загрузи модель:
-   ```bash
-   ollama pull llama3
-   ```
-3. В wizard выбери **Ollama**
-
-### Mistral API (облачный)
-
-1. Зарегистрируйся на [console.mistral.ai](https://console.mistral.ai/)
-2. Создай API ключ
-3. В wizard выбери **Mistral API** и введи ключ
-
-Wizard создаёт отдельный `MISTRAL_KEYS_MASTER_KEY` для локального шифрования ключей. Сохрани резервную копию этого значения: без него уже сохранённые ключи расшифровать нельзя. После запуска ключами можно управлять командой `/mistral_keys`; в Telegram и логах показываются только последние четыре символа.
-
-> ⚠️ При Mistral текст вакансий и твой профиль уходят во внешний API.
-
-### OpenAI-compatible (любой совместимый)
-
-Поддерживается любой сервис с эндпоинтом `/chat/completions` (LocalAI, LM Studio, Groq и т.п.).
-В wizard выбери **OpenAI-compatible** и укажи URL + ключ.
-
-> При использовании облачного OpenAI-compatible провайдера текст вакансии и данные профиля передаются этому провайдеру.
-
----
-
-## Telegram-команды
-
-| Команда | Описание |
-|---|---|
-| `/start` | Краткая справка |
-| `/status` | Режим, состояние, статистика |
-| `/pause` | Приостановить поиск |
-| `/resume` | Возобновить поиск |
-| `/pending` | Вакансии, ожидающие решения |
-| `/stats` | Статистика по статусам |
-| `/diagnostics` | Результат последнего цикла и состояние circuit breaker |
-| `/mistral_keys` | Список, проверка, добавление и удаление Mistral-ключей |
-| `/cancel` | Отменить ввод CAPTCHA |
-
----
-
-## Архитектура
-
-| Файл | Ответственность |
-|---|---|
-| `config.py` | Валидация `.env` и `profile.yaml` |
-| `browser_backend.py` | CloakBrowser / Playwright адаптер |
-| `hh_client.py` | Поиск, чтение страниц, отправка откликов |
-| `llm/` | Ollama / Mistral / OpenAI-compatible адаптеры, retry, квота |
-| `ai_analyzer.py` | Анализ вакансий, генерация писем |
-| `cover_letter.py` | Нормализация и обязательные проверки сопроводительного письма |
-| `database.py` | SQLite-состояние, лимиты, переходы статусов |
-| `approval.py` | Единственный разрешённый инициатор реального отклика |
-| `tg_bot.py` | Telegram-команды, превью, inline-кнопки |
-| `main.py` | Основной цикл агента |
-| `instance_lock.py` | Защита от одновременного запуска двух процессов |
-| `setup_wizard.py` | Интерактивный мастер настройки |
-
----
-
-## Безопасность
-
-- Реальный отклик требует `APP_MODE=approval` + `ENABLE_REAL_APPLY=true` и либо нажатия кнопки твоим Telegram ID, либо отдельно включённой автоподачи с достаточным confidence
-- Автоподача выключена по умолчанию и ограничивается размером пачки, рабочим окном и дневным лимитом
-- Ссылка на портфолио может быть объявлена обязательной; без неё письмо не будет отправлено
-- После начала отправки неопределённый результат резервирует дневной слот и останавливает автоматическую серию, чтобы не создавать дубли
-- `.env`, `profile.yaml` и `.browser-profile/` исключены из Git
-- Токены, cookies и полный `.env` не записываются в логи
-
----
-
-## Типичные ошибки
-
-| Ошибка | Решение |
-|---|---|
-| `Configuration error` | Заполни все обязательные поля через `python setup_wizard.py --edit` |
-| `CloakBrowser failed to start` | Проверь `python -m cloakbrowser info`, при необходимости смени на `BROWSER_BACKEND=playwright` |
-| `HH.ru login is required` | Запусти с `BROWSER_HEADLESS=false` и войди вручную |
-| `LLM check failed` | Проверь endpoint, ключ и дневную квоту через `python main.py --check-llm` |
-| `Invalid model response` | Проверь провайдер и модель — вакансия безопасно пропускается |
-
----
-
-## Разработка
-
-Тесты не обращаются к HH.ru, Telegram или внешним LLM:
-
-```bash
-python -m compileall .
-pytest -q
-```
-
----
-
-## Ограничения
-
-- Автоматизация может нарушать правила HH.ru — ответственность за аккаунт несёт пользователь
-- CloakBrowser не гарантирует отсутствие детектирования или CAPTCHA
-- Нет proxy, GeoIP-ротации и внешних CAPTCHA-сервисов
-- Рассчитано на одного владельца и одну SQLite-базу
-- В ручном режиме письмо можно проверить и отредактировать в Telegram; автоподача отправляет его без предварительного просмотра
-
----
-
-## Благодарности
-
-Огромное спасибо **[kkonstantin08](https://github.com/kkonstantin08)** за разработку этой архитектуры — именно он спроектировал весь безопасный конвейер от поиска вакансий до approval-механизма с permit-токенами.
-
-Также благодарность **[danscMax](https://github.com/danscMax)** — он реализовал базовые проверки и валидацию конфигурации, которые легли в основу надёжной работы агента.
-
-Искренняя благодарность **[vadzhipov](https://github.com/vadzhipov)** (Azat Vadzhipov) — за проектирование и реализацию надёжного механизма автоподачи откликов (guarded auto-apply) с пакетированием, контролем порога совпадения, рабочим окном и защитой circuit breaker.
-
----
-
-## Контакты
-
-Вопросы и предложения: **@fikstt3 (telegram)**
-
-## Disclamer: автоматизация HH.ru нарушает пользовательское соглашение, использовать на свой страх и риск. Автор не несет ответственность за возможные ограничения аккаунта.
+Share a redacted demo or an honest bug report if this helps you. Stars are welcome; virality is not a product feature.
