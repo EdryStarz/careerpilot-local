@@ -273,7 +273,17 @@ class HHClient:
 
     async def _response_confirmed(self, page: Any, url: str) -> bool:
         try:
-            return not await self._response_available(page, url)
+            if await self._response_available(page, url):
+                return False
+            # A missing Apply button is not proof of delivery: it can also
+            # mean a closed vacancy or a loading/access error.
+            markers = page.locator(
+                '[data-qa="vacancy-response-success"]:visible, '
+                '[data-qa="vacancy-response-link-view-topic"]:visible'
+            ).or_(page.get_by_text('Вы откликнулись', exact=False)).or_(
+                page.get_by_text('Резюме доставлено', exact=False)
+            ).or_(page.get_by_text('Отклик отправлен', exact=False))
+            return await markers.first.is_visible()
         except Exception as exc:
             logger.warning("application_confirmation_failed error=%s", exc)
             return False
@@ -815,7 +825,11 @@ class HHClient:
                 .or_(page.get_by_text("Отклик отправлен", exact=False))
                 .first
             )
-            await success_marker.wait_for(state="visible", timeout=5_000)
+            try:
+                await success_marker.wait_for(state="visible", timeout=30_000)
+            except Exception:
+                if not await self._response_confirmed(page, vacancy.url):
+                    raise RuntimeError('submission_unconfirmed: no positive HH delivery evidence; do not blindly resubmit')
             if not await self._response_confirmed(page, vacancy.url):
                 raise RuntimeError("HH.ru did not confirm the application")
             if required_portfolio:
