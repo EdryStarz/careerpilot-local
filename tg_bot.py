@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import html
 import logging
+import os
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
@@ -586,6 +587,8 @@ class TelegramService:
         await message.answer(f"Ключ {result.id} ····{result.suffix} добавлен.")
 
     async def send_preview(self, vacancy: Vacancy, include_actions: bool) -> None:
+        if os.environ.get('CAREERPILOT_ONLY_CONFIRMED') == '1':
+            return
         if is_pesec_enabled():
             pesec_img = get_pesec_image("approve")
             if pesec_img and pesec_img.exists():
@@ -720,12 +723,18 @@ class TelegramService:
         )
 
     async def notify(self, text: str) -> None:
+        if os.environ.get('CAREERPILOT_ONLY_CONFIRMED') == '1' and not (
+            text.startswith('✅ Автоотклик отправлен') or text.startswith('✓ Отклик отправлен')
+        ):
+            return
         try:
             await self.bot.send_message(chat_id=self.settings.tg_user_id, text=text)
         except Exception as exc:
             logger.warning("telegram_notify_failed error=%s", exc)
 
     async def notify_analysis_failed(self, title: str, url: str, error_type: str) -> None:
+        if os.environ.get('CAREERPILOT_ONLY_CONFIRMED') == '1':
+            return
         text = (
             f"⚠️ <b>Ошибка AI-анализа вакансии</b>\n"
             f"<b>{html.escape(title)}</b>\n"
@@ -743,6 +752,8 @@ class TelegramService:
             logger.warning("notify_analysis_failed_error error=%s", exc)
 
     async def notify_questionnaire_required(self, title: str, url: str) -> None:
+        if os.environ.get('CAREERPILOT_ONLY_CONFIRMED') == '1':
+            return
         text = (
             f"📋 <b>Требуется ручной отклик (тестовое / анкета)</b>\n"
             f"<b>{html.escape(title)}</b>\n"
@@ -762,6 +773,8 @@ class TelegramService:
     async def request_captcha(
         self, screenshot: Path, title: str, timeout_seconds: int
     ) -> str | None:
+        if os.environ.get('CAREERPILOT_ONLY_CONFIRMED') == '1':
+            return None
         self._mistral_key_input = None
         loop = asyncio.get_running_loop()
         self._captcha_future = loop.create_future()
@@ -791,6 +804,8 @@ class TelegramService:
         return release
 
     async def notify_update_available(self, release: ReleaseInfo) -> None:
+        if os.environ.get('CAREERPILOT_ONLY_CONFIRMED') == '1':
+            return
         text = (
             f"🚀 <b>Доступно обновление HH Agent {html.escape(release.tag_name)}!</b>\n"
             f"Текущая версия: <code>v{__version__}</code>\n\n"

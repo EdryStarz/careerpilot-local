@@ -6,7 +6,7 @@
 
 **Your CV. Your local model. Your job search.**
 
-HH.ru job search with local AI, Telegram review and optional applications.
+CV-based job search across public boards, ATS and Telegram, with local AI and opt-in applications.
 
 ![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB)
 ![MIT](https://img.shields.io/badge/License-MIT-34d399)
@@ -18,11 +18,12 @@ HH.ru job search with local AI, Telegram review and optional applications.
 
 ## What it does
 
-- Searches HH.ru using **your own** profile and target roles.
-- Uses Ollama locally to evaluate jobs and draft personalized letters.
-- Sends candidates to your private Telegram bot for review.
-- Supports dry-run, approval and explicitly enabled automatic applications.
-- Maintains a local application ledger and limits.
+- Searches Remotive, RemoteOK, We Work Remotely, Himalayas, configured Ashby/Lever/Greenhouse boards and public Telegram channels. HH.ru remains available through its adapter.
+- Imports **your** CV from PDF, DOCX or text; uses your role filters, portfolio links and confirmed questionnaire answers.
+- Chats with you through a private Telegram bot using a loopback Ollama model. Ordinary text can trigger search, sending, pause and status.
+- Submits supported ATS/Google Forms workflows and Telegram applications from your personal account, only after opt-in.
+- Answers questions in previously contacted Telegram application conversations using confirmed answers or optional exact CV quotes.
+- Keeps a private ledger, rate-limit pauses and confirmation evidence. Multi-source notifications contain **only confirmed submissions**, not found-job cards.
 
 **Public preview, not universal unattended job applications.** Login, CAPTCHA, questionnaires, legal consent and changing websites may require intervention. A timeout is not proof of failure: never blindly retry an uncertain application.
 
@@ -48,19 +49,38 @@ source .venv/bin/activate
 
 ```bash
 python -m pip install -r requirements.txt
-python setup_wizard.py
-python main.py --once
+python -m playwright install chromium
+ollama pull qwen3:4b
+python -m careerpilot init
+python -m careerpilot doctor
+python -m careerpilot run
 ```
 
-The wizard creates private `.env` and `profile.yaml` files. Start with **Ollama + dry_run**. See [the full configuration guide](README.upstream.md) for model setup, browser login, resume selection, Telegram and application modes.
+The wizard creates private `.env` and `careerpilot.yaml` files with sending **disabled**. Choose a model that fits your hardware; `qwen3:4b` is an example, not a quality guarantee. Configure boards, channels, filters, answers and role-specific portfolios using [the example profile](examples/careerpilot.example.yaml).
+
+After reviewing a dry run, opt in through your private YAML:
+
+```yaml
+enable_applications: true
+telegram_outreach_enabled: true  # Only if you want personal-account outreach
+```
+
+```bash
+python -m careerpilot telegram-login  # Own credentials + interactive sign-in
+python -m careerpilot run --send
+python -m careerpilot bot             # Private owner chat; separate terminal
+python -m careerpilot schedule --send # Daily runner; separate terminal
+```
+
+Read [the multi-source setup and support matrix](docs/MULTISOURCE.md) before enabling sending. For HH, use `python setup_wizard.py` and [the HH configuration guide](README.upstream.md); it has separate opt-ins, credentials and limits. Do not run two bot pollers with the same token.
 
 ## Safety and privacy
 
 | Mode | Real applications | Purpose |
 |---|---|---|
-| `dry_run` | No | Test matching and letters |
-| `approval` | With explicit real-apply settings and your approval | Review individually |
-| Optional auto-apply | Yes, when enabled | Tested workflows with limits |
+| Multi-source `run` | No | Inspect matching and routing |
+| Multi-source `run --send` | Only with `enable_applications: true` | Supported forms and personal Telegram outreach |
+| HH `dry_run` / `approval` / `auto_apply` | Depends on separate HH settings | Existing HH adapter |
 
 Never invent credentials, work authorization, languages, employers, achievements or consent. Review the generated content before enabling applications. Platform rules still apply; there is no CAPTCHA bypass.
 
@@ -68,15 +88,15 @@ Your profile is local, but submitted applications go to employers, and bot messa
 
 ## Included / not included
 
-This distribution includes the upstream HH agent, setup wizard, examples and tests. It does **not** contain the maintainer's CVs, tokens, browser sessions, logs or application history.
+This distribution includes the upstream HH agent plus the reusable `careerpilot` package, per-user setup wizard, examples and tests. It does **not** contain the maintainer's CVs, tokens, browser sessions, logs or application history.
 
-Generic LinkedIn, Upwork, personal-account Telegram outreach and multi-site ATS adapters are **not included**. The personalized multi-site worker is not yet a reusable public product. Interviews, offers and popularity are not guaranteed.
+Not every listing has a supported submission route. Unknown forms, legal consent, login, verification, custom dropdowns and required missing facts stop for review. Email, LinkedIn, Upwork, Freelancer bidding, Workday and arbitrary websites are not submission adapters. No paid bids, purchased credits, CAPTCHA bypass or automatic account creation. Generic adapters are beta, tested with fixtures; this is not proof of live submissions for every website. Interviews, offers and popularity are not guaranteed.
 
 ## По-русски
 
-Локальный помощник для поиска работы на HH.ru. Добавьте свой профиль, подключите Ollama и Telegram, проверьте подбор и письма в `dry_run`. Это предварительная публичная версия, а не универсальный автоотклик на все сайты.
+Теперь не только HH: поиск на публичных площадках, досках Ashby/Lever/Greenhouse и в Telegram; отправка через поддерживаемые формы и личный Telegram; общение с локальной моделью по вашему CV. Настройка для любого пользователя: `python -m careerpilot init`. Отправка выключена до вашего явного разрешения.
 
-Пошаговая настройка — в [полной инструкции](README.upstream.md). Не публикуйте `.env`, резюме, cookies, базы или переписки. Не повторяйте отправку, если предыдущий результат неизвестен.
+Настройка и ограничения — в [multi-source инструкции](docs/MULTISOURCE.md); отдельный HH-адаптер — в [HH-инструкции](README.upstream.md). Это beta, не обещание работы на всех сайтах без вмешательства. Не публикуйте `.env`, резюме, cookies, базы или переписки. Не повторяйте отправку, если предыдущий результат неизвестен.
 
 ## Development
 

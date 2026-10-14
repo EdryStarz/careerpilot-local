@@ -9,7 +9,7 @@ for name in paths:
     path = ROOT / name
     if not path.is_file():
         continue
-    if path.name in {'.env', 'profile.yaml', 'application_answers.json', 'work_preferences.json'} or path.suffix in {'.db', '.log', '.session', '.docx', '.pdf', '.gguf'}:
+    if path.name in {'.env', 'profile.yaml', 'careerpilot.yaml', 'last-run.json', 'jobs.json', '.profile-owner', 'application_answers.json', 'work_preferences.json'} or path.name.startswith(('proof-','source-cache-')) or path.suffix in {'.db', '.log', '.session', '.docx', '.pdf', '.gguf'}:
         errors.append(name + ': private/runtime artifact')
         continue
     try:

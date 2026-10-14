@@ -1,4 +1,10 @@
 .env
+careerpilot.yaml
+.careerpilot/
+*.session
+*.session-journal
+*.key
+last-run.json
 profile.yaml
 state.json
 storage_state*.json

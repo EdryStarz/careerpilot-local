@@ -1,0 +1,52 @@
+# Fictional template. Copy to ignored careerpilot.yaml and replace every value.
+name: Fictional Candidate
+first_name: Fictional
+last_name: Candidate
+email: candidate@example.org
+location: Your city, your country
+country: XX
+country_aliases: []
+cv_path: /absolute/path/to/your/cv.txt
+resume_path: /absolute/path/to/your/resume.pdf
+website: https://example.org/portfolio
+linkedin: ""
+phone: ""
+current_title: ""
+current_company: ""
+company_url: ""
+target_patterns:
+  - video editor
+sources: [remotive, remoteok, wwr, himalayas]
+telegram_channels: []
+ats_boards: []
+# Example board configuration (real public boards, not application guarantees):
+# - {kind: greenhouse, name: company-board-slug}
+# - {kind: lever, name: company-board-slug}
+# - {kind: ashby, name: company-board-slug}
+portfolios:
+  - pattern: video
+    url: https://example.org/video
+answers: []
+# Example of a factual answer YOU must confirm before enabling:
+# - {pattern: '^Preferred schedule$', answer: 'Your actual confirmed schedule'}
+filters:
+  location_allow: 'worldwide|global remote|work from anywhere'
+  exclude: 'US.only|U\.?S\.?[- ]based|LATAM.only'
+  allow_unknown_salary: true
+  # min_salary: 1000
+  # salary_currency: USD
+  # salary_period: monthly
+enable_applications: false
+telegram_outreach_enabled: false
+telegram_followups_enabled: false
+followups_cv_quotes: false
+telegram_max_age_days: 7
+hh_enabled: false
+headless: false
+min_score: 85
+max_daily_applications: 5
+max_review_per_run: 20
+seconds_between_applications: 60
+state_dir: .careerpilot
+timezone: UTC
+daily_time: '01:30'
