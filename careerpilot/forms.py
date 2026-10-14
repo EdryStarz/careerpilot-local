@@ -84,13 +84,40 @@ async def apply_form(profile, context, j, kind, url):
                     label = await f.evaluate(LABEL)
                     required = await f.evaluate("""e=>e.required || e.getAttribute('aria-required')==='true' || !!e.closest('.application-question,.ashby-application-form-field-entry')?.querySelector('.required,[class*="_required_"]')""")
                     type_ = await f.get_attribute('type')
-                    if LEGAL.search(label) or type_ in ('checkbox','radio'):
+                    if LEGAL.search(label):
                         if required:
                             missing.append(label or 'Required legal/choice control')
                         continue
+                    if type_ in ('checkbox','radio'):
+                        group = f.locator('xpath=ancestor::*[self::fieldset or contains(@class,"application-question") or contains(@class,"ashby-application-form-field-entry")][1]')
+                        if await group.count() != 1:
+                            if required:
+                                missing.append(label or 'Unscoped choice')
+                            continue
+                        controls = group.locator('input[type="'+type_+'"]')
+                        options = [await c.evaluate("e=>[...(e.labels||[])].map(l=>l.innerText).join(' ').trim() || e.getAttribute('aria-label') || e.value") for c in await controls.all()]
+                        answer = profile.answer(label,options,j['title'])
+                        selected = answer if isinstance(answer,list) else [answer]
+                        if answer and (type_ == 'checkbox' or len(selected) == 1):
+                            for index, option in enumerate(options):
+                                if option in selected:
+                                    await controls.nth(index).check()
+                                elif type_ == 'checkbox':
+                                    await controls.nth(index).uncheck()
+                        elif required:
+                            missing.append(label or 'Required choice needs confirmed answer')
+                        continue
                     if await f.get_attribute('role') == 'combobox':
-                        if required:
-                            missing.append(label or 'Required dropdown: needs reviewed option mapping')
+                        await f.click()
+                        choices = page.get_by_role('option').filter(visible=True)
+                        options = [await c.inner_text() for c in await choices.all()]
+                        answer = profile.answer(label,options,j['title'])
+                        if isinstance(answer,str) and options.count(answer) == 1:
+                            await choices.nth(options.index(answer)).click()
+                        else:
+                            await f.press('Escape')
+                            if required:
+                                missing.append(label or 'Required dropdown: needs reviewed option mapping')
                         continue
                     answer = profile.answer(label,title=j['title'])
                     tag = await f.evaluate('e=>e.tagName')

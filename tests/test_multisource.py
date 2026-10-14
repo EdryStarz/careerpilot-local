@@ -96,13 +96,13 @@ def test_ledger_uncertain_duplicate_daily_limit_and_pause(tmp_path):
 
 
 def test_review_rejects_invented_evidence(profile,monkeypatch):
-    monkeypatch.setattr(model,'local_json',AsyncMock(return_value={'suitable':True,'score':92,'reason':'fit','candidate_evidence':['Ten years in enterprise leadership'],'location_evidence':'Worldwide'}))
+    monkeypatch.setattr(model,'local_json',AsyncMock(return_value={'suitable':True,'score':92,'reason':'fit','candidate_evidence_ids':[999],'location_evidence_id':0}))
     with pytest.raises(ValueError,match='Candidate evidence'):
         asyncio.run(model.review(profile,vacancy()))
 
 
 def test_review_location_can_use_actual_location(profile,monkeypatch):
-    monkeypatch.setattr(model,'local_json',AsyncMock(return_value={'suitable':True,'score':85,'reason':'fit','candidate_evidence':['Premiere'],'location_evidence':'Worldwide'}))
+    monkeypatch.setattr(model,'local_json',AsyncMock(return_value={'suitable':True,'score':85,'reason':'fit','candidate_evidence_ids':[0],'location_evidence_id':0}))
     assert asyncio.run(model.review(profile,vacancy(description='Edit videos.')))['suitable']
 
 
@@ -213,3 +213,19 @@ def test_confirmations_deduplicate_and_store_telegram_message_id(profile,monkeyp
     assert len(posts) == 1
     with ledger.connect() as db:
         assert db.execute("SELECT value FROM controls WHERE name LIKE 'notified:%'").fetchone()[0] == '101'
+
+
+def test_model_regenerates_invalid_json_once_without_remote_proxy(profile,monkeypatch):
+    import httpx
+    calls = []
+    def handler(request):
+        calls.append(request)
+        content = '{"ok":' if len(calls) == 1 else '{"ok":true}'
+        return httpx.Response(200,json={'message':{'content':content}})
+    original = httpx.AsyncClient
+    def client(**kwargs):
+        assert kwargs['trust_env'] is False
+        return original(transport=httpx.MockTransport(handler),**kwargs)
+    monkeypatch.setattr(model.httpx,'AsyncClient',client)
+    assert asyncio.run(model.local_json(profile,'Return ok',{},{})) == {'ok':True}
+    assert len(calls) == 2

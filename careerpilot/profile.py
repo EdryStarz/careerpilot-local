@@ -95,6 +95,7 @@ class Profile:
                  'legal full name': self.data['name'], 'email': self.data['email'],
                  'email address': self.data['email'], 'phone': self.data.get('phone'),
                  'phone number': self.data.get('phone'), 'location': self.data['location'],
+                 'country': self.data.get('country'), 'country of residence': self.data.get('country'),
                  'current location': self.data['location'], 'where are you based?': self.data['location'],
                  'first name': self.data.get('first_name'), 'last name': self.data.get('last_name'),
                  'current company': self.data.get('current_company'),

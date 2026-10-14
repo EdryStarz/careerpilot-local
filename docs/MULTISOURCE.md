@@ -41,7 +41,7 @@ answers:
 
 Choose narrow answer patterns. Only put answers you have personally confirmed in this bank. A multiple-choice answer must exactly match an option. Unknown work authorization, years of experience, rates and deadlines are not guessed. Agreements, sensitive documents and legal consent require user action even when an answer bank contains “Yes.”
 
-The local model checks CV evidence and location evidence; its score is not objective proof of fit. Telegram cover letters use selected unchanged CV paragraphs and the relevant complete portfolio URL. They do not prepend model analysis. This conservative formatter avoids invented achievements but is less fluent than a human-reviewed letter.
+The local model selects numbered CV facts and posting excerpts, which the program resolves to exact text. Out-of-range IDs and invalid scores stop the review. Invalid/truncated JSON gets one bounded regeneration; timeouts do not trigger sending. Its score is not objective proof of fit, and small models can incorrectly reject a fitting job. Inspect dry-run decisions and select a sufficiently capable model for your hardware. Telegram cover letters use selected unchanged CV paragraphs and the relevant complete portfolio URL. They do not prepend model analysis. This conservative formatter avoids invented achievements but is less fluent than a human-reviewed letter.
 
 ## 2. Local model and private bot
 
